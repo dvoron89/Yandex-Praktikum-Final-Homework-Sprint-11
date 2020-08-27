@@ -67,7 +67,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     pagination_class = PageNumberPagination
-    parmission_classes = [ReviewCommentPermissions, IsAuthenticatedOrReadOnly]
+    permission_classes = [ReviewCommentPermissions, IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
         review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
@@ -96,12 +96,8 @@ class GenreViewSet(PermissionMixin, CDLViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     filter_backends = [filters.SearchFilter]
-    filterset_class = TitlesFilter
-
-    def get_serializer_class(self):
-        if self.action in ('create', 'update', 'partial_update'):
-            return TitleCreateSerializer
-        return TitleListSerializer
+    lookup_field = 'slug'
+    search_fields = ['=name']
 
 
 class TitleViewSet(PermissionMixin, viewsets.ModelViewSet):

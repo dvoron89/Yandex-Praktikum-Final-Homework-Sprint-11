@@ -7,7 +7,7 @@ class ReviewCommentPermissions(permissions.BasePermission):
         if request.method == 'POST':
             return not request.user.is_anonymous()
 
-        if request.method in ('PATCH', 'DELATE'):
+        if request.method in ('PATCH', 'DELETE'):
             return (request.user == obj.author or
                     request.user.role == UserRole.ADMIN or
                     request.user.role == UserRole.MODERATOR)
@@ -20,6 +20,6 @@ class ReviewCommentPermissions(permissions.BasePermission):
 class IsAdminOrSuperUser(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.user.is_authenticated:
-            return bool(request.user.is_stuff or
+            return bool(request.user.is_staff or
                         request.user.role == UserRole.ADMIN)
         return False

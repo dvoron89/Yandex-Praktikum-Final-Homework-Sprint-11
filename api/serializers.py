@@ -51,7 +51,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         if not title:
             return attrs
 
-        title = Title.objects.get(pk=self.context['view'].kwagrs.get('title'))
+        title = Title.objects.get(pk=self.context['view'].kwargs.get('title'))
         review = Review.objects.filter(author=request.user).filter(title=title).exists()
         if review:
             raise serializers.ValidationError('Review for this title already exists')
