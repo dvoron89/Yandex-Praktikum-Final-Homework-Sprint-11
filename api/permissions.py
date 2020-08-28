@@ -5,7 +5,7 @@ from .models import UserRole
 class ReviewCommentPermissions(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.method == 'POST':
-            return not request.user.is_anonymous()
+            return request.user.is_authenticated()
 
         if request.method in ('PATCH', 'DELETE'):
             return (request.user == obj.author or

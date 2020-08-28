@@ -51,6 +51,7 @@ class ReviewSerializer(serializers.ModelSerializer):
         if not title:
             return attrs
 
+        # Тут дикий затуп с использованием related_name, не получается прикрутить никак
         title = Title.objects.get(pk=self.context['view'].kwargs.get('title'))
         review = Review.objects.filter(author=request.user).filter(title=title).exists()
         if review:
@@ -71,6 +72,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
 
 class UserEmailSerializer(serializers.Serializer):
+    username = serializers.CharField()
     email = serializers.EmailField(required=True)
 
 

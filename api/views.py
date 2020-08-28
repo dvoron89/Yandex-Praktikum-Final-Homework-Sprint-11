@@ -1,6 +1,5 @@
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.db import IntegrityError
 from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 
@@ -26,6 +25,8 @@ from .serializers import (CategorySerializer,
                           CommentSerializer,
                           UserEmailSerializer,
                           ConfirmationCodeSerializer)
+
+from api_yamdb.settings import DOMAIN_NAME, DEFAULT_FROM_EMAIL
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -70,7 +71,7 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = [ReviewCommentPermissions, IsAuthenticatedOrReadOnly]
 
     def perform_create(self, serializer):
-        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
+        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'), title__id=self.kwargs.get('title_id'))
         serializer.save(author=self.request.user, review=review)
 
     def get_queryset(self):
@@ -115,25 +116,20 @@ class TitleViewSet(PermissionMixin, viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def get_confirmation_code(request):
-    username = request.data.get('username')
     serializer = UserEmailSerializer(data=request.data)
+    username = serializer.data.get('username')
 
-    if not serializer.is_valid():
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    serializer.is_valid(raise_exception=True)
 
     email = serializer.data.get('email')
-    if username is not None:
-        try:
-            User.objects.create_user(username=username, email=email)
-        except IntegrityError:
-            return Response({'Error': 'Username/mail already exists'}, status=status.HTTP_400_BAD_REQUEST)
 
-    user = get_object_or_404(User, email=email)
+    user = User.objects.get_or_create(username=username, email=email)
+
     confirmation_code = default_token_generator.make_token(user)
     mail_subject = 'Confirmation code'
     message = f'Your confirmation code is {confirmation_code}'
 
-    send_mail(mail_subject, message, 'Yamdb.ru <admin@yamdb.ru>', [email], fail_silently=False)
+    send_mail(mail_subject, message, '{} - {}'.format(DOMAIN_NAME, DEFAULT_FROM_EMAIL), [email], fail_silently=False)
     return Response({'Success': f'Confirmation code send to {email}'}, status=status.HTTP_200_OK)
 
 
