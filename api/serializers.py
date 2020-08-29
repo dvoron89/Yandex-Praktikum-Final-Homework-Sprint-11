@@ -44,16 +44,12 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         request = self.context['request']
+
         if request.method != 'POST':
             return attrs
 
-        title = Title.objects.filter(pk=self.context['view'].kwargs.get('title')).exists()
-        if not title:
-            return attrs
-
-        # Тут дикий затуп с использованием related_name, не получается прикрутить никак
-        title = Title.objects.get(pk=self.context['view'].kwargs.get('title'))
-        review = Review.objects.filter(author=request.user).filter(title=title).exists()
+        title_id = self.context['view'].kwargs.get('title')
+        review = Review.objects.filter(author=request.user).filter(title__id=title_id).exists()
         if review:
             raise serializers.ValidationError('Review for this title already exists')
         return attrs

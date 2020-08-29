@@ -123,14 +123,23 @@ def get_confirmation_code(request):
 
     email = serializer.data.get('email')
 
-    user = User.objects.get_or_create(username=username, email=email)
+    user, created = User.objects.get_or_create(username=username, email=email)
 
-    confirmation_code = default_token_generator.make_token(user)
-    mail_subject = 'Confirmation code'
-    message = f'Your confirmation code is {confirmation_code}'
+    if created:
+        confirmation_code = default_token_generator.make_token(user)
+        mail_subject = 'Confirmation code'
+        message = f'Your confirmation code is {confirmation_code}'
 
-    send_mail(mail_subject, message, '{} - {}'.format(DOMAIN_NAME, DEFAULT_FROM_EMAIL), [email], fail_silently=False)
-    return Response({'Success': f'Confirmation code send to {email}'}, status=status.HTTP_200_OK)
+        send_mail(mail_subject,
+                  message,
+                  '{} - {}'.format(DOMAIN_NAME, DEFAULT_FROM_EMAIL),
+                  [email],
+                  fail_silently=False)
+        return Response({'Success': f'Confirmation code send to {email}'},
+                        status=status.HTTP_200_OK)
+    else:
+        return Response({'Error': 'Пользователь с таким username/email уже существует'},
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['POST'])
